@@ -3,6 +3,7 @@ import { UserType } from '../common/enums/user.enum';
 
 @Schema()
 export class User {
+  
   @Prop({ required: true })
   name: string;
 
@@ -23,6 +24,9 @@ export const UserSchema = SchemaFactory.createForClass(User);
 
 /*
 
-Duplicate email crashes the app.
+Any field must not be empty (except profilePic)
+userType must be of type UserType
+Every field must be checked for datatype (all string except userType)
+format must be checked (email, phone number)
 
 */

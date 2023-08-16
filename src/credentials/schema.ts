@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { SchemaTypes } from 'mongoose';
-import { User } from 'src/users/schema';
+import { User } from '../users/schema';
 
 @Schema()
 export class Credentials {
@@ -22,3 +22,13 @@ export class Credentials {
 }
 
 export const CredentialsSchema = SchemaFactory.createForClass(Credentials);
+
+/*
+
+Any field must not be empty 
+userType must be of type UserType
+Every field must be checked for datatype (all string except userType)
+security code must be a three digit 
+format must be checked (card, expirty date)
+
+*/

@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { NotificationStatus, NotificationType } from '../common/enums/notification.enum';
 import { SchemaTypes } from "mongoose";
-import { User } from "src/users/schema";
+import { User } from '../users/schema';
 
 @Schema()
 export class Notification {
@@ -22,3 +22,13 @@ export class Notification {
 }
 
 export const NotificationSchema = SchemaFactory.createForClass(Notification);
+
+/*
+
+Any field must not be empty (except timestamp)
+status must be of type notificationstatus
+type must be of type notificationtype
+user must be of type user
+Every field must be checked for datatype (only content left)
+
+*/

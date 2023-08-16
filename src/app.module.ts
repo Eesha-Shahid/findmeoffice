@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import config from './config/config';
+import { ConfigModule } from '@nestjs/config';
 
 import { UserModule } from './users/module';
 import { OfficeModule } from './offices/module';
@@ -13,7 +13,8 @@ import { CredentialsModule } from './credentials/module';
 
 @Module({
   imports: [ 
-    MongooseModule.forRoot(config.mongoURI, { dbName: 'fmo_db',}),
+    ConfigModule.forRoot(),
+    MongooseModule.forRoot(process.env.MONGO_URI, { dbName: 'fmo_db',}),
     UserModule,
     OfficeModule,
     FeedbackModule,

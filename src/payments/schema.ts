@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { SchemaTypes } from 'mongoose';
 import { User } from '../users/schema'
 import { Credentials } from '../credentials/schema';
-import { PaymentMethod } from 'src/common/enums/payment.enum';
+import { PaymentMethod } from '../common/enums/payment.enum';
 
 @Schema()
 export class Payment {
@@ -23,3 +23,13 @@ export class Payment {
 }
 
 export const PaymentSchema = SchemaFactory.createForClass(Payment);
+
+/*
+
+Any field must not be empty (except timestamp)
+user must be of type user
+credentials must be of type credentials
+method must be of type paymentMethod
+Every field must be checked for datatype (remaining is amount, and date)
+
+*/
