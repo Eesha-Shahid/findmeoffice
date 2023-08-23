@@ -6,10 +6,10 @@ import { PaymentMethod } from '../common/enums/payment.enum';
 
 @Schema()
 export class Payment {
-    @Prop({ required: true, type: SchemaTypes.ObjectId, ref: 'User' })
+    @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
     user: User;
 
-    @Prop({ required: true, type: SchemaTypes.ObjectId, ref: 'Credentials' })
+    @Prop({ type: SchemaTypes.ObjectId, ref: 'Credentials' })
     credentials: Credentials;
 
     @Prop({ required: true, type: SchemaTypes.Decimal128})

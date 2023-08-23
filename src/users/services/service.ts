@@ -1,5 +1,5 @@
 import mongoose, { Model } from 'mongoose';
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, UseGuards } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from '../schema';
 import  { CreateUserDto } from '../dto/create-user.dto';

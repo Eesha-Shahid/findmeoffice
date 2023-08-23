@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Credentials } from '../schema';
 import  { CreateCredentialsDto } from '../dto/create-credentials.dto';
 import { UpdateCredentialsDto } from '../dto/update-credentials.dto';
+import { User } from '../../users/schema';
 
 @Injectable()
 export class CredentialsService {
@@ -12,12 +13,17 @@ export class CredentialsService {
     private credentialsModel: Model<Credentials>
     ) {}
 
-  async create(createCredentialsDto: CreateCredentialsDto): Promise<Credentials> {
-    return this.credentialsModel.create(createCredentialsDto);
+  async create(
+    createCredentialsDto: CreateCredentialsDto,
+    user: User
+    ): Promise<Credentials> {
+    
+    const data = Object.assign(createCredentialsDto, { user: user._id })
+    return this.credentialsModel.create(data);
   }
 
-  async findAll(): Promise<Credentials[]> {
-    return this.credentialsModel.find().exec();
+  async findAll(userId: string): Promise<Credentials[]> {
+    return this.credentialsModel.find({ user: userId }).exec();
   }
 
   async findById(id: string): Promise<Credentials> {
@@ -32,6 +38,10 @@ export class CredentialsService {
     }
 
     return credentials;
+  }
+
+  async findId(userId: string): Promise<Credentials | null> {
+    return await this.credentialsModel.findOne({ user: userId });
   }
   
   async updateById(id: string, updateCredentialsDto: UpdateCredentialsDto): Promise<Credentials | null> {

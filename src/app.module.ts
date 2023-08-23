@@ -10,11 +10,13 @@ import { FeedbackModule } from './feedbacks/module';
 import { NotificationModule } from './notifications/module';
 import { PaymentModule } from './payments/module';
 import { CredentialsModule } from './credentials/module';
+import { AuthModule } from './auth/module';
 
 @Module({
   imports: [ 
     ConfigModule.forRoot(),
     MongooseModule.forRoot(process.env.MONGO_URI, { dbName: 'fmo_db',}),
+    AuthModule,
     UserModule,
     OfficeModule,
     FeedbackModule,

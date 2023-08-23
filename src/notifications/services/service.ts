@@ -16,8 +16,8 @@ export class NotificationService {
     return this.notificationModel.create(createNotificationDto);
   }
 
-  async findAll(): Promise<Notification[]> {
-    return this.notificationModel.find().exec();
+  async findAll(userId: string): Promise<Notification[]> {
+    return this.notificationModel.find({ user: userId }).exec();
   }
 
   async findById(id: string): Promise<Notification> {

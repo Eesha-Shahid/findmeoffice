@@ -36,7 +36,7 @@ export class Office {
     @Prop({ required: true, type: [{ type: String, enum: Object.values(OfficeType) }]  })
     officeType: OfficeType[]
 
-    @Prop({ required: true, type: SchemaTypes.ObjectId, ref: 'User' })
+    @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
     owner: User;
 
     @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })

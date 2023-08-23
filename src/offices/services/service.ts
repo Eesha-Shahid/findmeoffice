@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Office } from '../schema';
 import  { CreateOfficeDto } from '../dto/create-office.dto';
 import { UpdateOfficeDto } from '../dto/update-office.dto';
+import { User } from '../../users/schema';
 
 @Injectable()
 export class OfficeService {
@@ -12,12 +13,17 @@ export class OfficeService {
     private officeModel: Model<Office>
     ) {}
 
-  async create(createOfficeDto: CreateOfficeDto): Promise<Office> {
-    return this.officeModel.create(createOfficeDto);
+  async create(
+    createOfficeDto: CreateOfficeDto,
+    owner: User
+    ): Promise<Office> {
+
+    const data = Object.assign(createOfficeDto, { owner: owner._id })
+    return this.officeModel.create(data);
   }
 
-  async findAll(): Promise<Office[]> {
-    return this.officeModel.find().exec();
+  async findAll(ownerId: string): Promise<Office[]> {
+    return this.officeModel.find({ owner: ownerId }).exec();
   }
 
   async findById(id: string): Promise<Office> {

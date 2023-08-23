@@ -4,6 +4,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Payment } from '../schema';
 import  { CreatePaymentDto } from '../dto/create-payment.dto';
 import { UpdatePaymentDto } from '../dto/update-payment.dto';
+import { Credentials } from '../../credentials/schema';
+import { User } from '../../users/schema';
 
 @Injectable()
 export class PaymentService {
@@ -12,12 +14,18 @@ export class PaymentService {
     private paymentModel: Model<Payment>
     ) {}
 
-  async create(createPaymentDto: CreatePaymentDto): Promise<Payment> {
-    return this.paymentModel.create(createPaymentDto);
+  async create(
+    createPaymentDto: CreatePaymentDto,
+    user: User,
+    credentials: Credentials
+    ): Promise<Payment> {
+      
+    const data = Object.assign(createPaymentDto, { user: user._id, credentials: credentials._id })
+    return this.paymentModel.create(data);
   }
 
-  async findAll(): Promise<Payment[]> {
-    return this.paymentModel.find().exec();
+  async findAll(userId: string): Promise<Payment[]> {
+    return this.paymentModel.find({ user: userId }).exec();
   }
 
   async findById(id: string): Promise<Payment> {

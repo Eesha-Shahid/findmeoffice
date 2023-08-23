@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Feedback } from '../schema';
 import  { CreateFeedbackDto } from '../dto/create-feedback.dto';
 import { UpdateFeedbackDto } from 'src/feedbacks/dto/update-feedback.dto';
+import { User } from 'src/users/schema';
 
 @Injectable()
 export class FeedbackService {
@@ -12,8 +13,12 @@ export class FeedbackService {
         private feedbackModel: Model<Feedback>
         ) {}
 
-    async create(createFeedbackDto: CreateFeedbackDto): Promise<Feedback> {
-        return this.feedbackModel.create(createFeedbackDto);
+    async create(
+        createFeedbackDto: CreateFeedbackDto,
+        user: User
+        ): Promise<Feedback> {
+        const data = Object.assign(createFeedbackDto, { user: user._id })
+        return this.feedbackModel.create(data);
     }
 
     async findAll(): Promise<Feedback[]> {

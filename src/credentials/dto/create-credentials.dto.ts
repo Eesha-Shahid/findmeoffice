@@ -1,9 +1,9 @@
-import { IsCreditCard, IsDateString, IsMongoId, IsNotEmpty, IsString } from 'class-validator';
+import { IsCreditCard, IsDateString, IsEmpty, IsNotEmpty, IsString } from 'class-validator';
 import { User } from '../../users/schema';
 
 export class CreateCredentialsDto {
-    @IsNotEmpty()
-    @IsMongoId()
+    
+    @IsEmpty({ message: 'You cannot pass user id' })
     user: User;
     
     @IsNotEmpty()
