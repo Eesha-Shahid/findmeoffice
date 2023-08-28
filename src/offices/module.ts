@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { OfficeController } from './controllers/controller';
@@ -8,11 +8,12 @@ import { AuthModule } from '../auth/module';
 
 @Module({
     imports: [ 
-        AuthModule,
+        forwardRef(() => AuthModule),
         MongooseModule.forFeature([{ name: Office.name, schema: OfficeSchema }]) 
     ],
     controllers: [OfficeController],
     providers: [OfficeService],
+    exports: [OfficeService],
 })
 
 export class OfficeModule {}

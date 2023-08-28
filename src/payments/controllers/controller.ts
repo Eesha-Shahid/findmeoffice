@@ -1,66 +1,45 @@
-import { Controller, Post, Body, ValidationPipe, Get, Param, Req, Put, Delete, UseGuards, UnauthorizedException } from '@nestjs/common';
-import { Payment } from '../schema';
-import { PaymentService } from '../services/service';
+import { Body, Controller, Post, Req, UseGuards, ValidationPipe, forwardRef } from "@nestjs/common";
+import StripeService from "../services/service";
+import { RolesAuthGuard } from "src/auth/roles-auth.guard";
+import { Roles } from "src/auth/roles.decorator";
+import { UserType } from "src/common/enums/user.enum";
 import { CreatePaymentDto } from '../dto/create-payment.dto';
-import { UpdatePaymentDto } from '../dto/update-payment.dto';
-import { CredentialsService } from '../../credentials/services/service';
-import { RolesAuthGuard } from '../../auth/roles-auth.guard';
-import { UserType } from '../../common/enums/user.enum';
-import { Roles } from '../../auth/roles.decorator';
+import { CreatePaymentMethodDto } from "../dto/create-payment-method.dto";
 
-@Controller('payments')
 @UseGuards(RolesAuthGuard)
+@Controller('payments')
 export class PaymentController {
-  constructor(
-    private readonly paymentService: PaymentService,
-    private readonly credentialsService: CredentialsService
-  ) {}
+    constructor(
+        private readonly stripeService: StripeService,
+    ) {}
 
-  //Create payment for a renter
-  @Post()
-  @Roles(UserType.Renter)
-  async createPayment(@Body
-    (new ValidationPipe()) createPaymentDto: CreatePaymentDto,
-    @Req() req
-    ): Promise<Payment> {
-      
-    const user = req.user;
-    const credentials = await this.credentialsService.findId(user);
-    return this.paymentService.create(createPaymentDto, user, credentials);
-  }
-
-  //Get all payments for a renter
-  @Get()
-  @Roles(UserType.Renter)
-  async getAllPayments(@Req() req): Promise<Payment[]> {
-    return this.paymentService.findAll(req.user);
-  }
-
-  //Get specific payment for a renter
-  @Get(':id')
-  @Roles(UserType.Renter)
-  async getPaymentById(@Param('id') id: string, @Req() req): Promise<Payment> {
-
-    const user = req.user;
-    const payment = await this.paymentService.findById(id);
-
-    if (payment.user.id != user.id){
-      throw new UnauthorizedException('You are not authorized to view this payment.');
+    //Step: 1 Create payment intent, returns client secret field from payment intent
+    @Roles(UserType.Renter)
+    @Post('charge')
+    async createPaymentIntent(
+      @Body(new ValidationPipe()) createPaymentDto: CreatePaymentDto, 
+      @Req() req) {
+      const paymentIntent = await this.stripeService.createPaymentIntent(req.user.id, req.user.stripeCustomerId, createPaymentDto.office);
+      return { clientSecret: paymentIntent.id } 
     }
 
-    return this.paymentService.findById(id);
+    //Step: 2 Create payment method using card details, returns payment method object
+    @Roles(UserType.Renter)
+    @Post('create')
+    async createPaymentMethod(@Body(new ValidationPipe()) createPaymentMethodDto: CreatePaymentMethodDto) {
+      const paymentMethod = await this.stripeService.createPaymentMethod(
+        createPaymentMethodDto.cardNumber,
+        createPaymentMethodDto.expMonth,
+        createPaymentMethodDto.expYear,
+        createPaymentMethodDto.cvc
+      );
+      return { paymentMethod };
+    }
+
+    //Step: 3 Accepts client secret and payment method id to confirm card payment
+    @Post('confirm')
+    async confirmCardPayment(@Body() data: { clientSecret: string, paymentMethodId: string }) {
+      const paymentIntent = await this.stripeService.confirmCardPayment(data.clientSecret, data.paymentMethodId);
+      return { paymentIntent };
+    }
   }
-
-  // @Put(':id')
-  // async updatePayment(
-  //   @Param('id') id: string,
-  //   @Body(new ValidationPipe()) updateUserDto: UpdatePaymentDto
-  // ): Promise<Payment> {
-  //   return this.paymentService.updateById(id, updateUserDto);
-  // }
-
-  // @Delete(':id')
-  // async deletePayment(@Param('id') id: string): Promise<Payment> {
-  //   return this.paymentService.deleteById(id);
-  // }
-}

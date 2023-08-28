@@ -32,7 +32,7 @@ export class NotificationController {
     const user = req.user;
     const notification = await this.notificationService.findById(id)
 
-    if (notification.user.id !== user.id) {
+    if (notification.user !== user.id) {
       throw new UnauthorizedException('You are not authorized to view this notification.');
     }
 
@@ -47,7 +47,7 @@ export class NotificationController {
     const user = req.user;
     const notification = await this.notificationService.findById(id)
 
-    if (notification.user.id !== user.id) {
+    if (notification.user !== user.id) {
       throw new UnauthorizedException('You are not authorized to delete this notification.');
     }
     

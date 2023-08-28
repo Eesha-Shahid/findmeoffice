@@ -2,9 +2,10 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { SchemaTypes } from "mongoose";
 import { OfficeType, RentalStatus } from '../common/enums/office.enum';
 import { User } from '../users/schema';
+import { Document } from "mongoose";
 
 @Schema()
-export class Office {
+export class Office extends Document{
 
     @Prop({ required: true })
     buildingName: string;
@@ -15,7 +16,7 @@ export class Office {
     @Prop({default: null})
     description?: string
 
-    @Prop({ required: true, type: SchemaTypes.Decimal128})
+    @Prop({ required: true })
     monthlyRate: number
 
     @Prop({ required: true })
@@ -30,7 +31,7 @@ export class Office {
     @Prop({ required: true, type: SchemaTypes.Decimal128})
     longitude: number
 
-    @Prop({ required: true, enum: Object.values(RentalStatus) })
+    @Prop({ enum: Object.values(RentalStatus), default: RentalStatus.Available })
     rentalStatus: RentalStatus
 
     @Prop({ required: true, type: [{ type: String, enum: Object.values(OfficeType) }]  })
@@ -40,7 +41,7 @@ export class Office {
     owner: User;
 
     @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
-    renter?: User;
+    renter?: string;
 }
 
 export const OfficeSchema = SchemaFactory.createForClass(Office);

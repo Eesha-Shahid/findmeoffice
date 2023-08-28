@@ -15,33 +15,10 @@ export class FeedbackController {
   //User can send feedback
   @Post()
   @Roles(UserType.Owner, UserType.Renter)
-  async createFeedback(@Body
-    (new ValidationPipe()) createFeedbackDto: CreateFeedbackDto,
+  async createFeedback(
+    @Body(new ValidationPipe()) createFeedbackDto: CreateFeedbackDto,
     @Req() req
     ): Promise<Feedback> {
-    return this.feedbackService.create(createFeedbackDto, req.user);
+    return this.feedbackService.create(createFeedbackDto, req.user.id);
   }
-
-  // @Get()
-  // async getAllFeedbacks(): Promise<Feedback[]> {
-  //   return this.feedbackService.findAll();
-  // }
-
-  // @Get(':id')
-  // async getFeedbackById(@Param('id') id: string): Promise<Feedback> {
-  //   return this.feedbackService.findById(id);
-  // }
-
-  // @Put(':id')
-  // async updateFeedback(
-  //   @Param('id') id: string,
-  //   @Body(new ValidationPipe()) updateUserDto: UpdateFeedbackDto
-  // ): Promise<Feedback> {
-  //   return this.feedbackService.updateById(id, updateUserDto);
-  // }
-
-  // @Delete(':id')
-  // async deleteFeedback(@Param('id') id: string): Promise<Feedback> {
-  //   return this.feedbackService.deleteById(id);
-  // }
 }

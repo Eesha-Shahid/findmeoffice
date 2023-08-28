@@ -8,9 +8,8 @@ import { UserModule } from './users/module';
 import { OfficeModule } from './offices/module';
 import { FeedbackModule } from './feedbacks/module';
 import { NotificationModule } from './notifications/module';
-import { PaymentModule } from './payments/module';
-import { CredentialsModule } from './credentials/module';
 import { AuthModule } from './auth/module';
+import { StripeModule } from './payments/module';
 
 @Module({
   imports: [ 
@@ -21,8 +20,7 @@ import { AuthModule } from './auth/module';
     OfficeModule,
     FeedbackModule,
     NotificationModule,
-    PaymentModule,
-    CredentialsModule
+    StripeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

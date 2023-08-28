@@ -3,6 +3,9 @@ import { OfficeService } from "../services/service";
 import { OfficeController } from "./controller";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { createOfficeDto, createdOffice, mockOffice, updateOfficeDto, updatedOffice } from '../../utlils/office.mock';
+import { mockUser } from "../../utlils/user.mock";
+import { RolesAuthGuard } from "../../auth/roles-auth.guard";
+import { mockAuthGuard } from "../../utlils/roles-auth.guard.mock";
   
 describe('OfficeController', () => {
 
@@ -22,6 +25,10 @@ describe('OfficeController', () => {
                         findByIdAndUpdate: jest.fn(),
                         findByIdAndDelete: jest.fn()
                     }
+                },
+                {
+                    provide: RolesAuthGuard,
+                    useValue: mockAuthGuard
                 }
             ],
         }).compile()
@@ -45,7 +52,7 @@ describe('OfficeController', () => {
             officeService.create = jest.fn().mockResolvedValue(createdOffice);          
 
             // Call the createOffice method and perform assertions
-            const result = await officeController.createOffice(createOfficeDto);
+            const result = await officeController.createOffice(createOfficeDto, mockUser);
             expect(officeService.create).toHaveBeenCalledWith(createOfficeDto);        
             expect(result).toEqual(createdOffice);
         })
@@ -53,7 +60,7 @@ describe('OfficeController', () => {
 
     describe('getAllOffices', () => {
         it('should return an array of offices', async() => {
-            const result = await officeController.getAllOffices();
+            const result = await officeController.getAllOffices(mockUser);
             expect(officeService.findAll).toHaveBeenCalled();
             expect(result).toEqual([mockOffice]);
         })
@@ -91,7 +98,7 @@ describe('OfficeController', () => {
         it('should update and return a office', async() => {
             
             officeService.updateById = jest.fn().mockResolvedValue(updatedOffice);          
-            const result = await officeController.updateOffice(mockOffice._id, updateOfficeDto);
+            const result = await officeController.updateOffice(mockOffice._id, updateOfficeDto, mockUser);
             expect(officeService.updateById).toHaveBeenCalledWith(
                 mockOffice._id,
                 updateOfficeDto,
@@ -104,7 +111,7 @@ describe('OfficeController', () => {
 
             const invalidId = 'invalid_id';
             officeService.updateById = jest.fn().mockRejectedValueOnce(new BadRequestException());
-            await expect(officeController.updateOffice(invalidId, updateOfficeDto)).rejects.toThrow(BadRequestException);
+            await expect(officeController.updateOffice(invalidId, updateOfficeDto, mockUser)).rejects.toThrow(BadRequestException);
             expect(officeService.updateById).toHaveBeenCalledWith(
                 invalidId,
                 updateOfficeDto
@@ -115,7 +122,7 @@ describe('OfficeController', () => {
         it('should throw NotFoundException if office is not found', async () => {
 
             officeService.updateById = jest.fn().mockRejectedValueOnce(new NotFoundException());
-            await expect(officeController.updateOffice(mockOffice._id, updateOfficeDto)).rejects.toThrow(NotFoundException);
+            await expect(officeController.updateOffice(mockOffice._id, updateOfficeDto, mockUser)).rejects.toThrow(NotFoundException);
             expect(officeService.updateById).toHaveBeenCalledWith(
                 mockOffice._id,
                 updateOfficeDto
@@ -129,7 +136,7 @@ describe('OfficeController', () => {
         it('should delete and return a office', async() => {
 
             officeService.deleteById = jest.fn().mockResolvedValue(mockOffice);          
-            const result = await officeController.deleteOffice(mockOffice._id);
+            const result = await officeController.deleteOffice(mockOffice._id, mockUser);
             expect(officeService.deleteById).toHaveBeenCalledWith(mockOffice._id);        
             expect(result).toEqual(mockOffice);
         })
@@ -139,7 +146,7 @@ describe('OfficeController', () => {
 
             const invalidId = 'invalid_id';
             officeService.deleteById = jest.fn().mockRejectedValueOnce(new BadRequestException());
-            await expect(officeController.deleteOffice(invalidId)).rejects.toThrow(BadRequestException);
+            await expect(officeController.deleteOffice(invalidId, mockUser)).rejects.toThrow(BadRequestException);
             expect(officeService.deleteById).toHaveBeenCalledWith(invalidId);
         });
       
@@ -147,7 +154,7 @@ describe('OfficeController', () => {
         it('should throw NotFoundException if office is not found', async () => {
 
             officeService.deleteById = jest.fn().mockRejectedValueOnce(new NotFoundException());
-            await expect(officeController.deleteOffice(mockOffice._id)).rejects.toThrow(NotFoundException);
+            await expect(officeController.deleteOffice(mockOffice._id, mockUser)).rejects.toThrow(NotFoundException);
             expect(officeService.deleteById).toHaveBeenCalledWith(mockOffice._id);
         });
     })

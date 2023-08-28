@@ -6,20 +6,24 @@ import * as bcrypt from 'bcryptjs';
 import { JwtService } from "@nestjs/jwt";
 import { SignUpDto } from "../dto/signup.dto";
 import { LoginDto } from "../dto/login.dto";
+import StripeService from "src/payments/services/service";
 
 @Injectable()
 export class AuthService {
     constructor(
         @InjectModel(User.name)
         private userModel: Model<User>,
-        private jwtService: JwtService
+        private jwtService: JwtService,
+        private stripeService: StripeService
     ){}
 
     async signUp(signUpDto: SignUpDto): Promise<{ token: string }> {
         try {
             const hashedPassword = await bcrypt.hash(signUpDto.password, 10);
+            const stripeCustomer = await this.stripeService.createCustomer(signUpDto.name, signUpDto.email);
             const createdUser = await this.userModel.create({
                 ...signUpDto,
+                stripeCustomerId: stripeCustomer.id,
                 password: hashedPassword,
             });
     

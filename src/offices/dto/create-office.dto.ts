@@ -1,6 +1,6 @@
-import { IsNotEmpty, IsNumber, IsString, IsArray, IsEnum, IsOptional, ArrayMinSize, IsMongoId, IsLatitude, IsLongitude, IsEmpty } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, IsArray, IsEnum, IsOptional, ArrayMinSize, IsMongoId, IsLatitude, IsLongitude, IsEmpty, isNotEmpty } from 'class-validator';
 import { OfficeType, RentalStatus } from '../../common/enums/office.enum';
-import { Decimal128, SchemaType } from 'mongoose';
+import { Decimal128 } from 'mongoose';
 import { User } from '../../users/schema';
 
 export class CreateOfficeDto {
@@ -18,7 +18,7 @@ export class CreateOfficeDto {
 
     @IsNotEmpty()
     @IsNumber()
-    monthlyRate: Decimal128;
+    monthlyRate: number;
 
     @IsNotEmpty()
     @IsArray()
@@ -40,6 +40,7 @@ export class CreateOfficeDto {
     @IsLongitude()	
     longitude: Decimal128;
 
+    @IsOptional()
     @IsNotEmpty()
     @IsEnum(RentalStatus)
     rentalStatus: RentalStatus;
@@ -56,5 +57,5 @@ export class CreateOfficeDto {
     owner: User;
 
     @IsEmpty({ message: 'You cannot pass user id' })
-    renter?: User;
+    renter?: string;
 }

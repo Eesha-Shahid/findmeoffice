@@ -6,6 +6,9 @@ import { Model } from 'mongoose';
 import { Office } from '../schema';
 import { OfficeService } from './service';
 import { mockOffice, createOfficeDto, createdOffice, updatedOffice, updateOfficeDto } from '../../utlils/office.mock';
+import { mockUser } from '../../utlils/user.mock';
+import { RolesAuthGuard } from '../../auth/roles-auth.guard';
+import { mockAuthGuard } from '../../utlils/roles-auth.guard.mock';
   
 describe('OfficeService', () => {
 
@@ -26,6 +29,10 @@ describe('OfficeService', () => {
                         findByIdAndDelete: jest.fn()
                     }
                 },
+                {
+                    provide: RolesAuthGuard,
+                    useValue: mockAuthGuard
+                }
             ],
         }).compile()
 
@@ -41,10 +48,14 @@ describe('OfficeService', () => {
 
         // Successful office creation
         it('should create an office with the provided owner', async () => {
-        
-            mockOfficeModel.create = jest.fn().mockResolvedValue(createdOffice);        
-            const result = await officeService.create(createOfficeDto);
-            expect(mockOfficeModel.create).toHaveBeenCalledWith(createOfficeDto);        
+            // Mocking the create behavior to return the createdOffice
+            mockOfficeModel.create = jest.fn().mockResolvedValue(createdOffice);
+
+            const result = await officeService.create(createOfficeDto, mockUser._id);
+            expect(mockOfficeModel.create).toHaveBeenCalledWith({
+                ...createOfficeDto,
+                owner: mockUser._id,
+            });
             expect(result).toEqual(createdOffice);
         });
     });
@@ -58,7 +69,7 @@ describe('OfficeService', () => {
             exec: jest.fn().mockResolvedValue([mockOffice]),
         });
 
-        const result = await officeService.findAll();
+        const result = await officeService.findAll(mockUser._id);
         expect(mockOfficeModel.find).toHaveBeenCalled();
         expect(result).toEqual([mockOffice]);
       });

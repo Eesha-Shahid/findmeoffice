@@ -1,22 +1,19 @@
-import { IsNotEmpty, IsNumber, IsEnum, IsMongoId, IsEmpty } from 'class-validator';
-import { Decimal128 } from 'mongoose';
-import { PaymentMethod } from '../../common/enums/payment.enum';
-import { Credentials } from '../../credentials/schema';
+import { IsString, IsNotEmpty, IsNumber, IsEmpty } from 'class-validator';
+import { Office } from '../../offices/schema';
 import { User } from '../../users/schema';
-
+ 
 export class CreatePaymentDto {
-    
-    @IsEmpty({ message: 'You cannot pass user id' })
-    user: User;
 
-    @IsEmpty({ message: 'You cannot pass credentials id' })
-    credentials: Credentials;
+  @IsEmpty()
+  user: string;
 
-    @IsNotEmpty()
-    @IsNumber()
-    amount: Decimal128;
+  @IsNotEmpty()
+  office: string;
 
-    @IsNotEmpty()
-    @IsEnum(PaymentMethod)
-    method: PaymentMethod;
+  @IsEmpty()
+  // @IsNumber()
+  amount: number;
+
+  @IsEmpty()
+  paymentMethod: string;
 }

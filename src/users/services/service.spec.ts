@@ -5,7 +5,9 @@ import { Model } from 'mongoose';
 
 import { User } from '../schema';
 import { UserService } from './service';
-import { createUserDto, createdUser, mockUser, updateUserDto, updatedUser } from '../../utlils/user.mock';
+import { mockUser, updateUserDto, updatedUser } from '../../utlils/user.mock';
+import { RolesAuthGuard } from '../../auth/roles-auth.guard';
+import { mockAuthGuard } from '../../utlils/roles-auth.guard.mock';
   
 describe('UserService', () => {
 
@@ -21,13 +23,16 @@ describe('UserService', () => {
 
                     // Mocked functions
                     useValue: {
-                        create: jest.fn(),
                         find: jest.fn(),
                         findById: jest.fn(),
                         findByIdAndUpdate: jest.fn(),
                         findByIdAndDelete: jest.fn()
                     }
                 },
+                {
+                    provide: RolesAuthGuard,
+                    useValue: mockAuthGuard
+                }
             ],
         }).compile()
 
@@ -42,31 +47,6 @@ describe('UserService', () => {
     it('should be defined', () => {
         expect(userService).toBeDefined();
     })
-
-    describe('create', () => {
-
-        // Successful user creation
-        it('should create a user', async () => {
-        
-            // Mocking the create method to return a resolved promise with the createdUser
-            mockUserModel.create = jest.fn().mockResolvedValue(createdUser);
-        
-            // Calling the userService's create method
-            const result = await userService.create(createUserDto);
-            expect(mockUserModel.create).toHaveBeenCalledWith(createUserDto);        
-            expect(result).toEqual(createdUser);
-        });
-    
-        // Duplicate email error
-        it('should throw ConflictException if user with email already exists', async () => {
-    
-            // to return a rejected promise
-            mockUserModel.create = jest.fn().mockRejectedValue({ code: 11000 });
-            await expect(userService.create(createUserDto)).rejects.toThrow(ConflictException);
-            expect(mockUserModel.create).toHaveBeenCalledWith(createUserDto);
-        });
-    });
-    
 
     describe('findAll', () => {
         it('should return an array of users', async () => {

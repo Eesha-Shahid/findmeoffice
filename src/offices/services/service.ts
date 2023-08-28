@@ -15,10 +15,10 @@ export class OfficeService {
 
   async create(
     createOfficeDto: CreateOfficeDto,
-    owner: User
+    ownerID: string
     ): Promise<Office> {
 
-    const data = Object.assign(createOfficeDto, { owner: owner._id })
+    const data = Object.assign(createOfficeDto, { owner: ownerID })
     return this.officeModel.create(data);
   }
 
@@ -26,12 +26,12 @@ export class OfficeService {
     return this.officeModel.find({ owner: ownerId }).exec();
   }
 
-  async findById(id: string): Promise<Office> {
-    if (!mongoose.isValidObjectId(id)) {
+  async findById(officeID: string): Promise<Office> {
+    if (!mongoose.isValidObjectId(officeID)) {
       throw new BadRequestException('Invalid office ID');
     }
 
-    const office = await this.officeModel.findById(id);
+    const office = await this.officeModel.findById(officeID);
 
     if (!office) {
       throw new NotFoundException('Office not found.');
@@ -40,13 +40,13 @@ export class OfficeService {
     return office;
   }
   
-  async updateById(id: string, updateOfficeDto: UpdateOfficeDto): Promise<Office | null> {
-    if (!mongoose.isValidObjectId(id)) {
+  async updateById(officeID: string, updateOfficeDto: UpdateOfficeDto): Promise<Office | null> {
+    if (!mongoose.isValidObjectId(officeID)) {
       throw new BadRequestException('Invalid office ID');
     }
 
     const updatedOffice = await this.officeModel
-      .findByIdAndUpdate(id, updateOfficeDto, { new: true })
+      .findByIdAndUpdate(officeID, updateOfficeDto, { new: true })
       .exec();
     
     if (!updatedOffice) {

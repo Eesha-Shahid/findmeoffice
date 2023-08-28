@@ -6,6 +6,7 @@ import { User, UserSchema } from "src/users/schema";
 import { AuthController } from "./controllers/controller";
 import { AuthService } from "./services/service";
 import { JwtStrategy } from "./jwt.strategy";
+import { StripeModule } from "src/payments/module";
 
 @Module({
     imports: [ 
@@ -18,7 +19,8 @@ import { JwtStrategy } from "./jwt.strategy";
                 },
             }),
         }),        
-        MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]) 
+        MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]) ,
+        StripeModule
     ],
     controllers: [AuthController],
     providers: [AuthService, JwtStrategy],
