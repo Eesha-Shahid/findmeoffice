@@ -5,25 +5,14 @@ import { Model } from 'mongoose';
 
 import { User } from '../schema';
 import { UserService } from './service';
-
-enum UserType {
-    Renter = 'renter',
-    Owner = 'owner',
-}
+import { mockUser, updateUserDto, updatedUser } from '../../utlils/user.mock';
+import { RolesAuthGuard } from '../../auth/roles-auth.guard';
+import { mockAuthGuard } from '../../utlils/roles-auth.guard.mock';
   
 describe('UserService', () => {
 
     let userService: UserService
     let mockUserModel: Model<User>;
-
-    const mockUser = {
-        _id:  '64c7a679089d68e116069f40',
-        name: 'John Doe',
-        email: 'johnn.doe@example.com',
-        phoneNumber: '03355989889',
-        profilePic: null,
-        userType: UserType.Renter
-    }
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -34,13 +23,16 @@ describe('UserService', () => {
 
                     // Mocked functions
                     useValue: {
-                        create: jest.fn(),
                         find: jest.fn(),
                         findById: jest.fn(),
                         findByIdAndUpdate: jest.fn(),
                         findByIdAndDelete: jest.fn()
                     }
                 },
+                {
+                    provide: RolesAuthGuard,
+                    useValue: mockAuthGuard
+                }
             ],
         }).compile()
 
@@ -55,52 +47,6 @@ describe('UserService', () => {
     it('should be defined', () => {
         expect(userService).toBeDefined();
     })
-
-    describe('create', () => {
-
-        // Successful user creation
-        it('should create a user', async () => {
-
-            const createUserDto = {
-              name: 'John Doe',
-              email: 'john.doe@example.com',
-              phoneNumber: '03355989889',
-              profilePic: null,
-              userType: UserType.Renter,
-            };
-        
-            const createdUser = {
-              _id: '64c7a679089d68e116069f40',
-              ...createUserDto,
-            };
-        
-            // Mocking the create method to return a resolved promise with the createdUser
-            mockUserModel.create = jest.fn().mockResolvedValue(createdUser);
-        
-            // Calling the userService's create method
-            const result = await userService.create(createUserDto);
-            expect(mockUserModel.create).toHaveBeenCalledWith(createUserDto);        
-            expect(result).toEqual(createdUser);
-        });
-    
-        // Duplicate email error
-        it('should throw ConflictException if user with email already exists', async () => {
-
-            const createUserDto = {
-                name: 'John Doe',
-                email: 'john.doe@example.com',
-                phoneNumber: '03355989889',
-                profilePic: null,
-                userType: UserType.Renter,
-            };
-    
-            // to return a rejected promise
-            mockUserModel.create = jest.fn().mockRejectedValue({ code: 11000 });
-            await expect(userService.create(createUserDto)).rejects.toThrow(ConflictException);
-            expect(mockUserModel.create).toHaveBeenCalledWith(createUserDto);
-        });
-    });
-    
 
     describe('findAll', () => {
         it('should return an array of users', async () => {
@@ -175,19 +121,6 @@ describe('UserService', () => {
 
         // User found
         it('should update and return a user', async () => {
-            const updateUserDto = {
-                name: 'Updated Name',
-                phoneNumber: '03340111774',
-            };
-        
-            const updatedUser = {
-                _id: mockUser._id,
-                name: 'Updated Name',
-                email: 'john.doe@example.com', 
-                phoneNumber: '03340111774',
-                profilePic: null,
-                userType: UserType.Renter,
-            };
         
             mockUserModel.findByIdAndUpdate = jest.fn().mockReturnValue({
                 exec: jest.fn().mockResolvedValue(updatedUser),
@@ -204,21 +137,13 @@ describe('UserService', () => {
       
         // Invalid ID
         it('should throw BadRequestException if invalid ID is provided', async () => {
+
             const invalidId = 'invalid-id';
-            const updateUserDto = {
-                name: 'Updated Name',
-                phoneNumber: '9876543210',
-            };
-          
             await expect(userService.updateById(invalidId, updateUserDto)).rejects.toThrow(BadRequestException);
         });
       
         // User not found
         it('should throw NotFoundException if user does not exist', async () => {
-            const updateUserDto = {
-              name: 'Updated Name',
-              phoneNumber: '9876543210',
-            };
         
             mockUserModel.findByIdAndUpdate = jest.fn().mockReturnValue({
                 exec: jest.fn().mockResolvedValue(null),

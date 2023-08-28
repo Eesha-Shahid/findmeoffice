@@ -1,14 +1,20 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { UserType } from '../common/enums/user.enum';
 
-@Schema()
-export class User {
+@Schema({ timestamps: true })
+export class User{
+
+  @Prop()
+  stripeCustomerId: string;
   
   @Prop({ required: true })
   name: string;
 
   @Prop({ required: true, unique: true })
   email: string;
+
+  @Prop({ required: true })
+  password: string;
 
   @Prop({ required: true })
   phoneNumber: string;

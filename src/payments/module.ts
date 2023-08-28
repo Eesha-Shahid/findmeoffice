@@ -1,14 +1,18 @@
-import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-
+import { Module, forwardRef } from '@nestjs/common';
+import StripeService from './services/service';
 import { PaymentController } from './controllers/controller';
-import { PaymentService } from './services/service';
+import { OfficeModule } from '../offices/module';
 import { Payment, PaymentSchema } from './schema';
+import { MongooseModule } from '@nestjs/mongoose';
+import { UserModule } from '..//users/module';
 
 @Module({
-    imports: [ MongooseModule.forFeature([{ name: Payment.name, schema: PaymentSchema }]) ],
+    imports: [
+        forwardRef(() => OfficeModule),
+        MongooseModule.forFeature([{ name: Payment.name, schema: PaymentSchema }]),
+    ],
     controllers: [PaymentController],
-    providers: [PaymentService],
+    providers: [StripeService],
+    exports: [StripeService],
 })
-
-export class PaymentModule {}
+export class StripeModule {}

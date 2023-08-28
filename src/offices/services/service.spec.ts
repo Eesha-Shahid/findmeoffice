@@ -1,60 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
-import { Model, Schema, Types } from 'mongoose';
+import { Model } from 'mongoose';
 
 import { Office } from '../schema';
 import { OfficeService } from './service';
-
-enum UserType {
-    Renter = 'renter',
-    Owner = 'owner',
-}
-
-enum OfficeType {
-    Buyer = 'permanent',
-    Owner = 'private day',
-    MeetingRoom = 'meeting room',
-    CoworkingDesk = 'co working desk',
-    EventSpace = 'event space',
-}
-
-enum RentalStatus {
-    Available = 'available',
-    Rented = 'rented'
-}
+import { mockOffice, createOfficeDto, createdOffice, updatedOffice, updateOfficeDto } from '../../utlils/office.mock';
+import { mockUser } from '../../utlils/user.mock';
+import { RolesAuthGuard } from '../../auth/roles-auth.guard';
+import { mockAuthGuard } from '../../utlils/roles-auth.guard.mock';
   
 describe('OfficeService', () => {
 
     let officeService: OfficeService
     let mockOfficeModel: Model<Office>;
-
-    const mockUser = {
-        _id:  '64c7a679089d68e116069f40',
-        name: 'John Doe',
-        email: 'johnn.doe@example.com',
-        phoneNumber: '03355989889',
-        profilePic: null,
-        userType: UserType.Renter
-    }
-
-    const mockOffice = {
-        _id:  '64c7a679089d68e116069f40',
-        buildingName: 'Example Building',
-        buildingSize: new Schema.Types.Decimal128('1500'), //Converts to a valid Decimal128 from string
-        monthlyRate: new Schema.Types.Decimal128('2500.12'),
-        image: [
-            "https://example.com/image1.jpg",
-            "https://example.com/image2.jpg",
-            "https://example.com/image3.jpg"
-        ],
-        address: '123 Main Street',
-        latitude: new Schema.Types.Decimal128('37.7749'),
-        longitude: new Schema.Types.Decimal128('-122.4194'),
-        rentalStatus: RentalStatus.Rented,
-        officeType: [OfficeType.Buyer,OfficeType.CoworkingDesk],
-        owner: mockUser
-    };
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -70,6 +29,10 @@ describe('OfficeService', () => {
                         findByIdAndDelete: jest.fn()
                     }
                 },
+                {
+                    provide: RolesAuthGuard,
+                    useValue: mockAuthGuard
+                }
             ],
         }).compile()
 
@@ -85,32 +48,14 @@ describe('OfficeService', () => {
 
         // Successful office creation
         it('should create an office with the provided owner', async () => {
+            // Mocking the create behavior to return the createdOffice
+            mockOfficeModel.create = jest.fn().mockResolvedValue(createdOffice);
 
-            const createOfficeDto = {
-                buildingName: 'Example Building',
-                buildingSize: new Schema.Types.Decimal128('1500'), 
-                monthlyRate: new Schema.Types.Decimal128('2500.12'),
-                image: [
-                    "https://example.com/image1.jpg",
-                    "https://example.com/image2.jpg",
-                    "https://example.com/image3.jpg"
-                ],
-                address: '123 Main Street',
-                latitude: new Schema.Types.Decimal128('37.7749'),
-                longitude: new Schema.Types.Decimal128('-122.4194'),
-                rentalStatus: RentalStatus.Rented,
-                officeType: [OfficeType.Buyer,OfficeType.CoworkingDesk],
-                owner: mockUser
-            };
-        
-            const createdOffice = {
-                _id: '64c7a679089d68e116069f40',
+            const result = await officeService.create(createOfficeDto, mockUser._id);
+            expect(mockOfficeModel.create).toHaveBeenCalledWith({
                 ...createOfficeDto,
-            };
-        
-            mockOfficeModel.create = jest.fn().mockResolvedValue(createdOffice);        
-            const result = await officeService.create(createOfficeDto);
-            expect(mockOfficeModel.create).toHaveBeenCalledWith(createOfficeDto);        
+                owner: mockUser._id,
+            });
             expect(result).toEqual(createdOffice);
         });
     });
@@ -124,7 +69,7 @@ describe('OfficeService', () => {
             exec: jest.fn().mockResolvedValue([mockOffice]),
         });
 
-        const result = await officeService.findAll();
+        const result = await officeService.findAll(mockUser._id);
         expect(mockOfficeModel.find).toHaveBeenCalled();
         expect(result).toEqual([mockOffice]);
       });
@@ -188,28 +133,6 @@ describe('OfficeService', () => {
 
         // Office found
         it('should update and return a office', async () => {
-            const updateOfficeDto = {
-                buildingName: 'Updated Building',
-                address: '123 Wolf Street',
-            };
-        
-            const updatedOffice = {
-                _id: mockOffice._id,
-                buildingName: 'Updated Building',
-                buildingSize: new Schema.Types.Decimal128('1500'), //Converts to a valid Decimal128 from string
-                monthlyRate: new Schema.Types.Decimal128('2500.12'),
-                image: [
-                    "https://example.com/image1.jpg",
-                    "https://example.com/image2.jpg",
-                    "https://example.com/image3.jpg"
-                ],
-                address: '123 Wolf Street',
-                latitude: new Schema.Types.Decimal128('37.7749'),
-                longitude: new Schema.Types.Decimal128('-122.4194'),
-                rentalStatus: RentalStatus.Rented,
-                officeType: [OfficeType.Buyer,OfficeType.CoworkingDesk],
-                owner: mockUser
-            };
         
             mockOfficeModel.findByIdAndUpdate = jest.fn().mockReturnValue({
                 exec: jest.fn().mockResolvedValue(updatedOffice),
@@ -226,21 +149,13 @@ describe('OfficeService', () => {
       
         // Invalid ID
         it('should throw BadRequestException if invalid ID is provided', async () => {
+            
             const invalidId = 'invalid-id';
-            const updateOfficeDto = {
-                buildingName: 'Updated Building',
-                address: '123 Wolf Street',
-            };
-          
             await expect(officeService.updateById(invalidId, updateOfficeDto)).rejects.toThrow(BadRequestException);
         });
       
         // Office not found
         it('should throw NotFoundException if office does not exist', async () => {
-            const updateOfficeDto = {
-                buildingName: 'Updated Building',
-                address: '123 Wolf Street',
-            };
         
             mockOfficeModel.findByIdAndUpdate = jest.fn().mockReturnValue({
                 exec: jest.fn().mockResolvedValue(null),

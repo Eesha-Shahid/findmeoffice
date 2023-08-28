@@ -2,25 +2,12 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { UserService } from "../services/service";
 import { UserController } from "./controller";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
-
-enum UserType {
-    Renter = 'renter',
-    Owner = 'owner',
-}
+import { createUserDto, createdUser, mockUser, updateUserDto, updatedUser } from '../../utlils/user.mock';
   
 describe('UserController', () => {
 
     let userService: UserService
     let userController: UserController
-
-    const mockUser = {
-        _id:  '64c7a679089d68e116069f40',
-        name: 'John Doe',
-        email: 'johnn.doe@example.com',
-        phoneNumber: '03355989889',
-        profilePic: null,
-        userType: UserType.Renter
-    }
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -29,7 +16,6 @@ describe('UserController', () => {
                 {
                     provide: UserService,
                     useValue: {
-                        create: jest.fn(),
                         findAll: jest.fn().mockReturnValue([mockUser]),
                         findById: jest.fn().mockReturnValue(mockUser),
                         findByIdAndUpdate: jest.fn(),
@@ -49,40 +35,6 @@ describe('UserController', () => {
 
     it('should be defined', () => {
         expect(userController).toBeDefined();
-    })
-
-    describe('createUser', () => {
-        it('should create a user', async() => {
-
-            const createUserDto = {
-                name: 'John Doe',
-                email: 'john.doe@example.com',
-                phoneNumber: '03355989889',
-                profilePic: null,
-                userType: UserType.Renter,
-            };
-        
-            const createdUser = {
-                _id: '64c7a679089d68e116069f40',
-                ...createUserDto,
-            };
-        
-            // Mock the create method to return the created user
-            userService.create = jest.fn().mockResolvedValue(createdUser);          
-
-            // Call the createUser method and perform assertions
-            const result = await userController.createUser(createUserDto);
-            expect(userService.create).toHaveBeenCalledWith(createUserDto);        
-            expect(result).toEqual(createdUser);
-        })
-    })
-
-    describe('getAllUsers', () => {
-        it('should return an array of users', async() => {
-            const result = await userController.getAllUsers();
-            expect(userService.findAll).toHaveBeenCalled();
-            expect(result).toEqual([mockUser]);
-        })
     })
 
     describe('getUserById', () => {
@@ -114,21 +66,10 @@ describe('UserController', () => {
 
     describe('updateUser', () => {
 
-        const updateUserDto = {
-            name: 'Updated Name',
-            phoneNumber: '03340111774',
-        };
-    
-        const updatedUser = {
-            ...mockUser, 
-            name: 'Updated Name',
-            phoneNumber: '03340111774',
-        };
-
         it('should update and return a user', async() => {
             
             userService.updateById = jest.fn().mockResolvedValue(updatedUser);          
-            const result = await userController.updateUser(mockUser._id, updateUserDto);
+            const result = await userController.updateUser(updateUserDto, mockUser._id);
             expect(userService.updateById).toHaveBeenCalledWith(
                 mockUser._id,
                 updateUserDto,
@@ -141,7 +82,7 @@ describe('UserController', () => {
 
             const invalidId = 'invalid_id';
             userService.updateById = jest.fn().mockRejectedValueOnce(new BadRequestException());
-            await expect(userController.updateUser(invalidId, updateUserDto)).rejects.toThrow(BadRequestException);
+            await expect(userController.updateUser(updateUserDto, invalidId)).rejects.toThrow(BadRequestException);
             expect(userService.updateById).toHaveBeenCalledWith(
                 invalidId,
                 updateUserDto
@@ -152,7 +93,7 @@ describe('UserController', () => {
         it('should throw NotFoundException if user is not found', async () => {
 
             userService.updateById = jest.fn().mockRejectedValueOnce(new NotFoundException());
-            await expect(userController.updateUser(mockUser._id, updateUserDto)).rejects.toThrow(NotFoundException);
+            await expect(userController.updateUser(updateUserDto, mockUser._id)).rejects.toThrow(NotFoundException);
             expect(userService.updateById).toHaveBeenCalledWith(
                 mockUser._id,
                 updateUserDto

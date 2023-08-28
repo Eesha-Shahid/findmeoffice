@@ -1,38 +1,45 @@
-import { Controller, Post, Body, ValidationPipe, Get, Param, NotFoundException, Put, Delete } from '@nestjs/common';
-import { PaymentService } from '../services/service';
+import { Body, Controller, Post, Req, UseGuards, ValidationPipe, forwardRef } from "@nestjs/common";
+import StripeService from "../services/service";
+import { RolesAuthGuard } from "src/auth/roles-auth.guard";
+import { Roles } from "src/auth/roles.decorator";
+import { UserType } from "src/common/enums/user.enum";
 import { CreatePaymentDto } from '../dto/create-payment.dto';
-import { Payment } from '../schema';
-import { UpdatePaymentDto } from '../dto/update-payment.dto';
+import { CreatePaymentMethodDto } from "../dto/create-payment-method.dto";
 
+@UseGuards(RolesAuthGuard)
 @Controller('payments')
 export class PaymentController {
-  constructor(private readonly paymentService: PaymentService) {}
+    constructor(
+        private readonly stripeService: StripeService,
+    ) {}
 
-  @Post()
-  async createPayment(@Body(new ValidationPipe()) createPaymentDto: CreatePaymentDto): Promise<Payment> {
-    return this.paymentService.create(createPaymentDto);
-  }
+    //Step: 1 Create payment intent, returns client secret field from payment intent
+    @Roles(UserType.Renter)
+    @Post('charge')
+    async createPaymentIntent(
+      @Body(new ValidationPipe()) createPaymentDto: CreatePaymentDto, 
+      @Req() req) {
+      const paymentIntent = await this.stripeService.createPaymentIntent(req.user.id, req.user.stripeCustomerId, createPaymentDto.office);
+      return { clientSecret: paymentIntent.id } 
+    }
 
-  @Get()
-  async getAllPayments(): Promise<Payment[]> {
-    return this.paymentService.findAll();
-  }
+    //Step: 2 Create payment method using card details, returns payment method object
+    @Roles(UserType.Renter)
+    @Post('create')
+    async createPaymentMethod(@Body(new ValidationPipe()) createPaymentMethodDto: CreatePaymentMethodDto) {
+      const paymentMethod = await this.stripeService.createPaymentMethod(
+        createPaymentMethodDto.cardNumber,
+        createPaymentMethodDto.expMonth,
+        createPaymentMethodDto.expYear,
+        createPaymentMethodDto.cvc
+      );
+      return { paymentMethod };
+    }
 
-  @Get(':id')
-  async getPaymentById(@Param('id') id: string): Promise<Payment> {
-    return this.paymentService.findById(id);
+    //Step: 3 Accepts client secret and payment method id to confirm card payment
+    @Post('confirm')
+    async confirmCardPayment(@Body() data: { clientSecret: string, paymentMethodId: string }) {
+      const paymentIntent = await this.stripeService.confirmCardPayment(data.clientSecret, data.paymentMethodId);
+      return { paymentIntent };
+    }
   }
-
-  @Put(':id')
-  async updatePayment(
-    @Param('id') id: string,
-    @Body(new ValidationPipe()) updateUserDto: UpdatePaymentDto
-  ): Promise<Payment> {
-    return this.paymentService.updateById(id, updateUserDto);
-  }
-
-  @Delete(':id')
-  async deletePayment(@Param('id') id: string): Promise<Payment> {
-    return this.paymentService.deleteById(id);
-  }
-}

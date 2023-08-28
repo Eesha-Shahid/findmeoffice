@@ -1,10 +1,9 @@
-import { IsString, IsNotEmpty, IsOptional, IsMongoId } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsMongoId, IsEmpty } from 'class-validator';
 import { User } from '../../users/schema';
 
 export class CreateFeedbackDto {
   
-  @IsNotEmpty()
-  @IsMongoId()
+  @IsEmpty({ message: 'You cannot pass user id' })
   user: User; 
 
   @IsString()

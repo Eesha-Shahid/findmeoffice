@@ -2,45 +2,12 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { NotificationService } from "../services/service";
 import { NotificationController } from "./controller";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
-  
-enum UserType {
-    Renter = 'renter',
-    Owner = 'owner',
-}
-
-export enum NotificationType {
-    paymentReceived = 'Rent Payment Received',
-    rentExpiryReminder = 'Rent Expiry Reminder',
-    rentRenewalOffer = 'Rent Renewal Offer',
-    rentRenewed = 'Rent Renewed'
-}
-
-export enum NotificationStatus {
-    Delivered = "delivered",
-    Read = "read"
-}
+import { createNotificationDto, createdNotification, mockNotification, updateNotificationDto, updatedNotification } from "../../utlils/notification.mock";
 
 describe('NotificationController', () => {
 
     let notificationService: NotificationService
     let notificationController: NotificationController
-
-    const mockUser = {
-        _id:  '64c7a679089d68e116069f40',
-        name: 'John Doe',
-        email: 'johnn.doe@example.com',
-        phoneNumber: '03355989889',
-        profilePic: null,
-        userType: UserType.Renter
-    }
-
-    const mockNotification = {
-        _id:  '64c7a679089d68e116069f40',
-        content: 'Sample Notification',
-        status: NotificationStatus.Delivered,
-        type: NotificationType.paymentReceived,
-        user: mockUser
-    };
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -73,18 +40,6 @@ describe('NotificationController', () => {
 
     describe('createNotification', () => {
         it('should create a notification', async() => {
-
-            const createNotificationDto = {
-                content: 'Sample Notification',
-                status: NotificationStatus.Delivered,
-                type: NotificationType.paymentReceived,
-                user: mockUser
-            };
-        
-            const createdNotification = {
-                _id: '64c7a679089d68e116069f40',
-                ...createNotificationDto,
-            };
         
             // Mock the create method to return the created notification
             notificationService.create = jest.fn().mockResolvedValue(createdNotification);          
@@ -132,17 +87,6 @@ describe('NotificationController', () => {
     })
 
     describe('updateNotification', () => {
-
-        const updateNotificationDto = {
-            content: 'Updated Notification',
-            status: NotificationStatus.Read,
-        };
-    
-        const updatedNotification = {
-            ...mockNotification,
-            bcontent: 'Updated Notification',
-            status: NotificationStatus.Read
-        };
 
         it('should update and return a notification', async() => {
             

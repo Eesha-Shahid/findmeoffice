@@ -1,66 +1,87 @@
-import mongoose, { Model } from 'mongoose';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
+import { OfficeService } from "../../offices/services/service";
+import Stripe from 'stripe';
 import { InjectModel } from '@nestjs/mongoose';
 import { Payment } from '../schema';
-import  { CreatePaymentDto } from '../dto/create-payment.dto';
-import { UpdatePaymentDto } from '../dto/update-payment.dto';
+import { Model, Types } from 'mongoose';
+import { RentalStatus } from 'src/common/enums/office.enum';
 
+ 
 @Injectable()
-export class PaymentService {
+export default class StripeService {
+  private stripe: Stripe;
+ 
   constructor(
+
+    @Inject(forwardRef(() => OfficeService)) 
+    private readonly officeService: OfficeService,
+
     @InjectModel(Payment.name) 
     private paymentModel: Model<Payment>
-    ) {}
 
-  async create(createPaymentDto: CreatePaymentDto): Promise<Payment> {
-    return this.paymentModel.create(createPaymentDto);
+  ){
+
+    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY, 
+      {apiVersion: '2023-08-16',
+    });
+
   }
 
-  async findAll(): Promise<Payment[]> {
-    return this.paymentModel.find().exec();
+  //Creates a Stripe Customer 
+  async createCustomer(name: string, email: string) {
+    return this.stripe.customers.create({
+      name,
+      email
+    });
   }
 
-  async findById(id: string): Promise<Payment> {
-    if (!mongoose.isValidObjectId(id)) {
-      throw new BadRequestException('Invalid payment ID');
-    }
+  //Step: 1 Create payment intent, returns payment intent
+  async createPaymentIntent(userID: string, customerId: string, officeID: string){
 
-    const payment = await this.paymentModel.findById(id);
+    const office = await this.officeService.findById(officeID)
+    const paymentIntent = await this.stripe.paymentIntents.create({
+      amount: office.monthlyRate,
+      currency: process.env.STRIPE_CURRENCY,
+      customer: customerId,
+      automatic_payment_methods: {
+        enabled: true,
+        allow_redirects: 'never',
+      },
+      payment_method: "pm_card_visa"
+    });
 
-    if (!payment) {
-      throw new NotFoundException('Payment not found.');
-    }
+    //Updating rental status and renter
+    await this.officeService.updateById(officeID, { rentalStatus: RentalStatus.Rented, renter: userID })
 
-    return payment;
+    //Storing in database
+    const paymentDocument = {
+      amount: paymentIntent.amount,
+      paymentMethod: paymentIntent.payment_method_types.toString()
+    };
+
+    const data = Object.assign(paymentDocument, { user: userID, office: officeID })
+    await this.paymentModel.create(data)
+    return paymentIntent;
   }
-  
-  async updateById(id: string, updatePaymentDto: UpdatePaymentDto): Promise<Payment | null> {
-    if (!mongoose.isValidObjectId(id)) {
-      throw new BadRequestException('Invalid payment ID');
-    }
 
-    const updatedPayment = await this.paymentModel
-      .findByIdAndUpdate(id, updatePaymentDto, { new: true })
-      .exec();
-    
-    if (!updatedPayment) {
-        throw new NotFoundException('Payment not found');
-    }
-
-    return updatedPayment;
+  //Step: 2 Create payment method using card details, returns payment method object
+  async createPaymentMethod(cardNumber: string, expMonth: number, expYear: number, cvc: string) {
+    return this.stripe.paymentMethods.create({
+      type: 'card',
+      card: {
+        number: cardNumber,
+        exp_month: expMonth,
+        exp_year: expYear,
+        cvc,
+      },
+    });
   }
 
-  async deleteById(id: string): Promise<Payment> {
-    if (!mongoose.isValidObjectId(id)) {
-        throw new BadRequestException('Invalid payment ID');
-    }
-    
-    const deletedPayment = await this.paymentModel.findByIdAndDelete(id);
-    
-    if (!deletedPayment) {
-        throw new NotFoundException('Payment not found');
-    }
-
-    return deletedPayment;
+  //Step: 3 Accepts client secret and payment method id to confirm card payment
+  async confirmCardPayment(clientSecret: string, paymentMethodId: string) {
+    const paymentIntent = await this.stripe.paymentIntents.confirm(clientSecret, {
+      payment_method: "pm_card_visa",
+    });
+    return paymentIntent;
   }
 }
